@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponseServerError, HttpResponseBadRequest
+from django.http import HttpResponseServerError, HttpResponseNotFound
 from django.template.loader import render_to_string
 from django.db import models
 
@@ -9,7 +9,7 @@ def get_feed(request, feed):
     try:
         feedObj = RssFeed.objects.get(nick_name=feed)
     except RssFeed.DoesNotExist:
-        return HttpResponseBadRequest()
+        return HttpResponseNotFound()
     except Exception as e:
         print(e)
         return HttpResponseServerError()

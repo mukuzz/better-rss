@@ -3,6 +3,7 @@ from .models import RssFeed, RssItem
 import feedparser
 from newspaper import Article
 from  django.utils import timezone
+from urllib.parse import urlsplit
 
 
 def addFeed():
@@ -18,9 +19,11 @@ def addFeed():
             should_update_summary = False
             print("Summary will NOT be appended to feed articles")
         data = feedparser.parse(url)
+        split_url = urlsplit(data.feed.link)
+        link = f'{split_url.scheme}://{split_url.netloc}'
         rss_feed = RssFeed()
         rss_feed.title = data.feed.title
-        rss_feed.url = data.feed.link
+        rss_feed.url = link
         rss_feed.feed_url = url
         rss_feed.description = data.feed.description
         rss_feed.should_update_summary = should_update_summary
@@ -93,7 +96,7 @@ def refresh_feeds():
                             image=image,
                             summary=entry.summary,
                             nlp_summary=nlp_summary,
-                            author=', '.join(authors),
+                            author=', '.join([a.strip() for a in authors]),
                         )
                         rss_item.save()
                         print("Added:", entry.link)
