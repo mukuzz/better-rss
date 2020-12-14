@@ -80,7 +80,8 @@ def refresh_feeds():
                         if should_update_summary:
                             article.nlp()
                             nlp_summary = article.summary
-                        authors = article.authors
+                        if feed.nick_name != "hn":
+                            authors = article.authors
                     except Exception as e:
                         print(e)
                     finally:
