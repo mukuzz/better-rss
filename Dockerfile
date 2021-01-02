@@ -9,13 +9,8 @@ WORKDIR /opt/better-rss
 RUN pip install -r requirements.txt
 COPY . /opt/better-rss
 
-RUN python -c "import nltk;nltk.download('punkt')" && \
-    python manage.py migrate && \
-    apt-get update && apt-get install --no-install-recommends -y cron && \
-    rm -rf /var/lib/apt/lists/* && \
-    echo '*/5 * * * * root /usr/local/bin/python /opt/better-rss/manage.py refreshFeeds && echo "$(date)" >> /opt/better-rss/data/refresh-log' > /etc/cron.d/refresh-feeds
+RUN python manage.py migrate
 
 EXPOSE 80
 
-CMD cron && \
-    python manage.py runserver 0:80
+CMD python manage.py runserver 0:80
