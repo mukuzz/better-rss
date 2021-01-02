@@ -18,6 +18,6 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path('', views.get_feed, name="get_feed"),
+    path('feed/<path:feed>', views.get_feed, name="get_feed"),
     path('clear', views.clear_saved_rss_items, name="clear_saved_rss_items"),
 ]

@@ -7,8 +7,9 @@ from urllib.parse import urlsplit
 
 from .models import RssItem
 
-def get_feed(request):
-    feed = request.GET.get('feedUrl', None)
+def get_feed(request, feed):
+    url_without_target = f'{request.scheme}://{request.get_host()}/feed/'
+    feed = request.build_absolute_uri()[len(url_without_target):]
     return StreamingHttpResponse(
         stream_feed(feed),
         content_type="application/rss+xml; charset=utf-8",
@@ -23,18 +24,19 @@ def stream_feed(feed):
         split_url = urlsplit(feed)
         link = f'{split_url.scheme}://{split_url.netloc}'
         context = {
-            "title": data.feed.title,
+            "title": get_dict_item_safe(data.feed,'title'),
             "url": link,
-            "description": data.feed.description
+            "description": get_dict_item_safe(data.feed,'description'),
         }
         yield render_to_string('betterRss/rss_header.html', context)
         
         for entry in entries:
-            rss_item = RssItem.objects.filter(link=entry.link).first()
+            item_link = get_dict_item_safe(entry,'link')
+            rss_item = RssItem.objects.filter(link=item_link).first()
             if rss_item == None:
                 # Save new rss item to db
-                article = Article(entry.link)
                 try:
+                    article = Article(item_link)
                     article.download()
                     article.parse()
                     image = article.top_image
@@ -47,11 +49,11 @@ def stream_feed(feed):
                     except AttributeError:
                         pass
                     rss_item = RssItem(
-                        title=entry.title,
-                        link=entry.link,
-                        published=entry.published,
+                        title=get_dict_item_safe(entry,'title'),
+                        link=item_link,
+                        published=get_dict_item_safe(entry,'published'),
                         image=image,
-                        summary=entry.summary,
+                        summary=get_dict_item_safe(entry,'summary'),
                         author=', '.join([a.strip() for a in authors]),
                     )
                     rss_item.save()
@@ -66,3 +68,9 @@ def stream_feed(feed):
 def clear_saved_rss_items(request):
     RssItem.objects.all().delete()
     return HttpResponse()
+
+def get_dict_item_safe(dict, attr):
+    try:
+        return dict[attr]
+    except KeyError:
+        return ""
